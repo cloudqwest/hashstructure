@@ -6,6 +6,7 @@ import (
 	"hash"
 	"hash/fnv"
 	"reflect"
+	"time"
 )
 
 // ErrNotStringer is returned when there's an error with hash:"string"
@@ -17,6 +18,8 @@ type ErrNotStringer struct {
 func (ens *ErrNotStringer) Error() string {
 	return fmt.Sprintf("hashstructure: %s has hash:\"string\" set, but does not implement fmt.Stringer", ens.Field)
 }
+
+var timeType = reflect.TypeOf(time.Time{})
 
 // HashOptions are options that are available for hashing.
 type HashOptions struct {
@@ -156,6 +159,18 @@ func (w *walker) visit(v reflect.Value, opts *visitOpts) (uint64, error) {
 		// A direct hash calculation
 		w.h.Reset()
 		err := binary.Write(w.h, binary.LittleEndian, v.Interface())
+		return w.h.Sum64(), err
+	}
+
+	switch v.Type() {
+	case timeType:
+		w.h.Reset()
+		b, err := v.Interface().(time.Time).MarshalBinary()
+		if err != nil {
+			return 0, err
+		}
+
+		err = binary.Write(w.h, binary.LittleEndian, b)
 		return w.h.Sum64(), err
 	}
 
