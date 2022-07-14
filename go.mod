@@ -1,1 +1,3 @@
-module github.com/mitchellh/hashstructure
+module github.com/cloudqwest/hashstructure
+
+go 1.18
